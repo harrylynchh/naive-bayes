@@ -1,0 +1,25 @@
+RESULTS WITH 0.9
+
+python main.py testing.txt likelihood.txt
+Track 1 determined to be: b | ACTUAL: b
+Track 2 determined to be: b | ACTUAL: b
+Track 3 determined to be: a | ACTUAL: b
+Track 4 determined to be: a | ACTUAL: a
+Track 5 determined to be: a | ACTUAL: a
+Track 6 determined to be: b | ACTUAL: b
+Track 7 determined to be: a | ACTUAL: a
+Track 8 determined to be: a | ACTUAL: a
+Track 9 determined to be: a | ACTUAL: a
+Track 10 determined to be: b | ACTUAL: b
+
+python main.py testing.txt likelihood.txt stdev_likelihood.txt
+Track 1 determined to be: b | ACTUAL: b
+Track 2 determined to be: b | ACTUAL: b
+Track 3 determined to be: b | ACTUAL: b
+Track 4 determined to be: a | ACTUAL: a
+Track 5 determined to be: a | ACTUAL: a
+Track 6 determined to be: b | ACTUAL: b
+Track 7 determined to be: a | ACTUAL: a
+Track 8 determined to be: a | ACTUAL: a
+Track 9 determined to be: a | ACTUAL: a
+Track 10 determined to be: a | ACTUAL: b

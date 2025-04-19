@@ -1,18 +1,30 @@
-from data_io import load_tracks
+'''
+stdev_likelihood_gen.py
+4/19/2025
+Harry Lynch
+Facility to generate a likelihood distribution of rolling stdevs.  Takes a dataset
+containing 20 total tracks, 10 bird and 10 plane in that order and executes standard
+deviation calculations over a sliding window w/ pandas.  Writes to stdev_likelihood.txt
+with the final distribution for both classes (top row birds bottom row planes) and a header
+with the minimum observed value important for classification later.
+'''
 
+from data_io import load_tracks
+from globals import BIN_WIDTH_SIGMA, ROLL_WIN
+
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import sys 
-from pathlib import Path
-BIN_WIDTH_SIGMA = 0.1
-ROLL_WIN = 5
 
+"""
+build_sigma_likelihoods
+Uses a rolling window of size ROLL_WIN (see globals) to calculate stdevs over 
+various intervals in the dataset.  Assumes that track indexes 0-9 are birds and 10-19 are planes.
+Return a likelihood table for rolling stddev and the minimum value over a provided dataset
+"""
 def build_sigma_likelihoods(dataset: np.ndarray) -> tuple[np.ndarray, float]:
-    """
-    build_sigma_likelihoods
-    Return a likelihood table for rolling stddev and the minimum value over the dataset
-    Uses pandas Series.rolling(...).std().to_numpy() to compute the rolling stddev
-    """
+    
     bird_values: list[np.ndarray] = []
     plane_values: list[np.ndarray] = []
 
@@ -64,6 +76,7 @@ def build_sigma_likelihoods(dataset: np.ndarray) -> tuple[np.ndarray, float]:
     # (ensure all entries sum to 1)
     bird_like = bird_hist / bird_hist.sum()
     plane_like = plane_hist / plane_hist.sum()
+    
     # Create a final np array which contains 2 rows,
     # bird stdev likelihoods, and plane stdev likelihoods
     like_table = np.vstack([bird_like, plane_like])
@@ -79,6 +92,9 @@ if len(args) != 2:
 dataset_path = args[1]
 dataset = load_tracks(dataset_path)
 likelihoods, sig_min = build_sigma_likelihoods(dataset)
+
+# Write out the likelihood distributions to stdev_likelihood.txt
+# NOTE: This produces a "header" containing the min value of the distro
 out = Path("stdev_likelihood.txt")
 with open(out, "w") as f:
     f.write(f"{sig_min}\n")
