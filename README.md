@@ -72,8 +72,11 @@
     
     - I referenced StackOverflow a few times for some help with MatPlotLib and I heard
       of the library through Derrick Chaney's Piazza post as well as some data science hobbying I do
-    - I extensively referenced the numpy and pandas documentation throughout this project as
-      most of the math and manipulation is done through numpy data structures or pandas statistics
-      calculations.  They're linked here [Pandas Rolling Stdev](https://pandas.pydata.org/docs/reference/api/pandas.core.window.rolling.Rolling.std.html), [NumPy](https://numpy.org/doc/stable/reference/arrays.ndarray.html), [MatPlotLib](https://matplotlib.org/stable/tutorials/pyplot.html)
+    - I extensively referenced the numpy and pandas documentation throughout this project as 
+      most of the math and manipulation is done through numpy data structures or 
+      pandas statistics calculations.  I also followed along with some pyplot tutorials 
+      to do the graphing in graph_track.py and graph_sigma_likelihoods.py 
+        
+  See linked here: [Pandas Rolling Stdev](https://pandas.pydata.org/docs/reference/api/pandas.core.window.rolling.Rolling.std.html), [NumPy](https://numpy.org/doc/stable/reference/arrays.ndarray.html), [MatPlotLib](https://matplotlib.org/stable/tutorials/pyplot.html)
 
 **External packages required to run this program are listed in `requirement.txt`**
