@@ -100,10 +100,13 @@ def classify_track(track: np.ndarray,
     a_cnt = per.count('a')
     if b_cnt > a_cnt:
         final = 'b'
+        prob = b_cnt / len(per)
+
     elif a_cnt > b_cnt:
         final = 'a'
+        prob = a_cnt / len(per)
+
     else:
         final = CLASSES[post.argmax()]
-    
     # Return the per-iteration results and the final determination 
-    return ''.join(per), final
+    return ''.join(per), final, prob 

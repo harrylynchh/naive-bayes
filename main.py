@@ -20,7 +20,7 @@ args = sys.argv
 if len(args) < 3 or len(args) > 4:
     print("Improper arguments: ")
     print("Usage: python main.py {testset.txt} {speed_likelihoods.txt} [stdev_likelihoods.txt]")
-
+    sys.exit()
 # Load test-set data into the tracks
 test_tracks = io.load_tracks(Path(args[1]))
 
@@ -35,17 +35,27 @@ else:
     min_sig = None
 
 results = []
+finals = []
 sols = ['b', 'b', 'b', 'a', 'a', 'b', 'a', 'a', 'a', 'b']
 # Classify each track in the data and append to the results array to write out later
 # NOTE: Prints final determinations to stdout and full iteration-by-iteration classifications
 #       to "classifer.out"
 out = Path("classifier.out")
 for idx, track in enumerate(test_tracks):
-    iters, final = classify_track(track, speed_likes, sigma_likes, min_sig)
+    iters, final, prob = classify_track(track, speed_likes, sigma_likes, min_sig)
     results.append(f"FINAL: {final}, ITERS: {iters}")
-    print(f"---- Track {idx + 1} determined to be: {final} | ACTUAL: {sols[idx]} ----")
+    finals.append(final)
+    print(f"---- Track {idx + 1} determined to be: [{final}] with probability {prob:.3f} --- ACTUAL: [{sols[idx]}] ----")
 
 # Write the result of each track to it's own row in classifier.out
 out.write_text('\n'.join(results) + '\n')
+
+# Calculate accuracy and output
+correct = 0
+for idx, res in enumerate(sols):
+    if res == finals[idx]:
+        correct += 1
+
+print (f"\n---- ACCURACY: {correct / len(sols) * 100:.2f} % ----")
 
 print("\n---- SEE 'classifier.out' for full iteration-by-iteration decisions ----")
