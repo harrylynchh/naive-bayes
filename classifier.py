@@ -34,7 +34,7 @@ the object with the most classifications is determined as the identity of the tr
 NOTES: 
 If like_sig is None, only speed feature is used.
 If both likelihoods are used, speed is weighed 0.7 to stdev's 0.3 (found through experimentation)
-Returns per-sample labels (600 chars) and final label.
+Returns per-sample labels (600 chars), the final label, and the probability based off each decision
 """
 def classify_track(track: np.ndarray,
                    like_speed: np.ndarray,
