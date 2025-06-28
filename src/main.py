@@ -8,7 +8,7 @@ Outputs the results of the classification by sending a summary of the final dete
 and expected class of the test set to stdout and the full report of iterations and final decisions
 to a file called "classifier.out".
 USAGE:
-   python main.py {testset.txt} {speed_likelihood.txt} [OPTIONALLY: stdev_likelihoods.txt]
+   python main.py {../data/testset.txt} {../data/speed_likelihoods.txt} [../data/stdev_likelihoods.txt]
 '''
 from pathlib import Path
 from classifier import classify_track
@@ -19,7 +19,7 @@ args = sys.argv
 
 if len(args) < 3 or len(args) > 4:
     print("Improper arguments: ")
-    print("Usage: python main.py {testset.txt} {speed_likelihoods.txt} [stdev_likelihoods.txt]")
+    print("Usage: python main.py {../data/testset.txt} {../data/speed_likelihoods.txt} [../data/stdev_likelihoods.txt]")
     sys.exit()
 # Load test-set data into the tracks
 test_tracks = io.load_tracks(Path(args[1]))
@@ -40,7 +40,7 @@ sols = ['b', 'b', 'b', 'a', 'a', 'b', 'a', 'a', 'a', 'b']
 # Classify each track in the data and append to the results array to write out later
 # NOTE: Prints final determinations to stdout and full iteration-by-iteration classifications
 #       to "classifer.out"
-out = Path("classifier.out")
+out = Path("../output/classifier.out")
 for idx, track in enumerate(test_tracks):
     iters, final, prob = classify_track(track, speed_likes, sigma_likes, min_sig)
     results.append(f"FINAL: {final}, ITERS: {iters}")

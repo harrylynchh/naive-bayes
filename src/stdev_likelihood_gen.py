@@ -86,7 +86,7 @@ args = sys.argv
 
 if len(args) != 2:
     print("Please provide a path to dataset.txt")
-    print("Usage: python stdev_likelihood_gen.py <path_to_dataset>")
+    print("Usage: python ../data/stdev_likelihood_gen.py")
     sys.exit(1)
 
 dataset_path = args[1]
@@ -95,7 +95,7 @@ likelihoods, sig_min = build_sigma_likelihoods(dataset)
 
 # Write out the likelihood distributions to stdev_likelihood.txt
 # NOTE: This produces a "header" containing the min value of the distro
-out = Path("stdev_likelihood.txt")
+out = Path("../data/stdev_likelihood.txt")
 with open(out, "w") as f:
     f.write(f"{sig_min}\n")
     np.savetxt(f, likelihoods, fmt="%.6e", delimiter=" ")

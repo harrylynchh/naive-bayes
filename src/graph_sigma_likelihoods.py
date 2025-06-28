@@ -15,7 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Grab the likelihood
-sigma_file = "stdev_likelihood.txt"
+sigma_file = "../data/stdev_likelihood.txt"
 like_sig, sig_min = load_sigma_likelihood(Path(sigma_file))
 
 # Report num of bins
