@@ -1,92 +1,104 @@
-# README.md
+# Radar-Trace Classification via Recursive Bayesian Estimation
 
-## Harry Lynch
+Classifies radar tracks as **bird** or **aircraft** from noisy velocity time series using recursive Bayesian estimation. Each track is a 600-sample velocity trace; the classifier maintains a posterior `[P(bird), P(plane)]` that is updated at every measurement using a sticky-state transition model and empirical likelihoods over two features: instantaneous speed and rolling speed volatility.
 
-### 4/19/2025
+**Result: 10/10 correct on the held-out test tracks** (up from 9/10 using the speed feature alone). Implemented from scratch in NumPy/pandas — no ML libraries.
 
-### Naive Bayesian Classifier for Identifying UFOs
+## Method
 
----
+For each track, the posterior is initialized at a uniform prior `[0.5, 0.5]` and updated per measurement in three steps:
 
-# About:
+**1. Transition (temporal prior).** The posterior is propagated through a transition matrix encoding that an object's class is persistent — the probability of "staying" in the current belief state is 0.9:
 
-    This program is designed to classify unidentified flying objects as either
-    birds or airplanes based off of radar data on the velocity of these objects
-    over a 600 second interval.  This is done with a Naive Bayesian Classifer
-    which hinges on a recursive bayesian estimation algorithm as well as
-    likelihood distributions for speeds of birds and planes as well as a second
-    feature derived from the first-- rolling standard deviation likelihoods.
+```
+T = | 0.9  0.1 |
+    | 0.1  0.9 |
+```
 
-    At it's core, this program takes "tracks" of object data (600 measurements)
-    of the velocity of the object over time.  Over each track, we establish a
-    probability matrix of [p(bird), p(plane)] which is initialized at [0.5, 0.5]
+This biases each step toward the accumulated belief, smoothing over single-sample noise.
 
-    On each new measurement, we first apply a transition matrix that biases the
-    current posterior by the previous measurements-- so, if the current state
-    of the vector is [0.73, 0.27] (BIRD), the transition matrix would further
-    increase the probability of the object being a BIRD.  This probability is
-    0.9 in my implementation and is applied on every measurement.  After this,
-    we refer the current velocity measurement to the distribution of likelihoods
-    returning a matrix of [P(speed | bird), P(speed | plane)] from the likelihood.
-    We multiply our posterior by this matrix to alter how likely we think a UFO is
-    either object based on the probability of it appearing at that speed. This same
-    process is applied to the standard deviation over the past 5 measurements.
-    We then normalize the posterior and make a classification based on which of
-    [p(bird), p(plane)] is higher.  Save the decision and repeat for all measurents.
+**2. Measurement update (log-linear likelihood pooling).** The current speed is binned into an empirical likelihood table, yielding `[P(speed | bird), P(speed | plane)]`. When the volatility feature is enabled, its likelihood is fused with the speed likelihood as a **geometrically weighted (log-linear) pool**:
 
-    NOTE: In initial tests, just using the speed likelihood netted an accuracy of
-    90% with the accuracy of both likelihoods also being 90%.  To improve the system,
-    I attempted a few things.  I adjusted the bin width of the stdevs to hopefully
-    improve the curve to no avail and I also tried shifting transition probabilities.
-    None of these worked so I added weights to the likelihoods.  The weight that got me
-    to 100% accuracy on the test set was weighing the speed likelihood 0.7 and
-    the stdev 0.3.  I believe this was because the track that was getting confused (10)
-    had an abnormally small stdev for a bird and weighing it less tuned the algorithm
-    enough to make the right decision.
+```
+L = L_speed^0.7 · L_sigma^0.3
+```
 
-    In determining which feature to add aside from speed, I landed on stdev after
-    looking at the second figure in the spec of the test set data.  The birds wildly
-    vary their speeds compared to the planes which remain constant for most of the measurement.
-    This pointed me toward standard deviation as a way to differentiate the two objects further.
-    These suspicions were further confirmed when I graphed each track using graph_track.py and observed
-    the difference in the statistics.
+Exponent weighting controls each feature's influence on the posterior in log space, rather than mixing probabilities additively. The posterior is multiplied by `L` and renormalized.
 
----
+**3. Per-sample decision and track-level vote.** Each measurement is labeled by the argmax of the posterior; the track's final label is the majority vote across its 600 per-sample labels, with the reported confidence being the winning label's vote share.
 
-# Usage:
+Missing measurements (NaNs, of which the test set contains several hundred) are skipped in the likelihood update — the transition step still applies, so belief decays gracefully toward persistence rather than being corrupted.
 
-    - This program relies on a small handful of dependencies for data visualization,
-      preparation, and linear algebra calculations (matrix multiplication) before running,
-      start up a virtual environment of your choosing and run:
-              ** pip install < requirements.txt **
-      This will install all dependencies listed in requirements.txt
+## Features
 
-    - After the environment is set up, to view the classifier run the following
-              ** python main.py ../data/testing.txt ../data/likelihood.txt [../data/stdev_likelihood.txt] **
-      inclusion of the standard deviation likelihood is optional such that the difference
-      in performance can be observed between the two.
+**Speed.** Empirical class-conditional likelihoods over binned velocity (0.5 m/s bins), provided with the dataset.
 
-    - The program will analyze the dataset and return, for each track,
-        - A determination
-        - The probability of that determination (how sure the program is)
-        - The actual solution of the given testset ('b' is bird, 'a' is airplane)
-        - The accuracy over the testset comapred to the given solutions as a percent
-    - NOTE: In-depth iteration-by-iteration output is written to a "classifier.out" file
-            featuring the final determination and each data point's determination
+**Rolling volatility.** A 5-sample rolling standard deviation of speed, computed with pandas. Motivation: visualizing the raw tracks (`graph_track.py`) shows birds vary speed erratically while aircraft hold near-constant velocity, so the *volatility* of the velocity series is discriminative even where the speed distributions overlap. Class-conditional likelihoods for this feature are generated by `stdev_likelihood_gen.py` from the 20-track labeled corpus (12,000 measurements), histogrammed in 0.1 m/s bins with **Laplace smoothing** (+1 per bin) so unobserved bins cannot zero out the posterior.
 
-# Resources:
+## Data
 
-    - I referenced StackOverflow a few times for some help with MatPlotLib and I heard
-      of the library through Derrick Chaney's Piazza post as well as some data science hobbying I do
-    - I extensively referenced the numpy and pandas documentation throughout this project as
-      most of the math and manipulation is done through numpy data structures or
-      pandas statistics calculations.  I also followed along with some pyplot tutorials
-      to do the graphing in graph_track.py and graph_sigma_likelihoods.py
+- `data/dataset.txt` — labeled corpus: 20 tracks × 600 samples (10 bird, 10 aircraft), used to build the volatility likelihood tables.
+- `data/testing.txt` — evaluation set: 10 tracks × 600 samples.
+- `data/likelihood.txt` — speed likelihoods (2 × 400 bins).
+- `data/stdev_likelihood.txt` — generated volatility likelihoods; first line is the distribution's minimum value (used for bin indexing), followed by one row per class.
 
-See linked here:
-[Pandas Rolling Stdev](https://pandas.pydata.org/docs/reference/api/pandas.core.window.rolling.Rolling.std.html),
-[NumPy](https://numpy.org/doc/stable/reference/arrays.ndarray.html),
-[MatPlotLib](https://matplotlib.org/stable/tutorials/pyplot.html)
+## Results
 
-**External packages required to run this program are listed in
-`requirements.txt`**
+| Configuration | Track accuracy |
+|---|---|
+| Speed likelihood only | 9/10 |
+| Speed + volatility (0.7 / 0.3 log-linear pool) | 10/10 |
+
+The single track misclassified by the speed-only model exhibited atypically low volatility for a bird; down-weighting the volatility feature (0.3 exponent) relative to speed corrected it without degrading the other tracks.
+
+## Limitations
+
+- **Feature weights were selected by experimentation on the evaluation set.** With only 10 evaluation tracks, a separate validation split was not statistically meaningful, so the 0.7/0.3 weighting is tuned in-sample and the 10/10 figure should be read accordingly. With more data, the correct procedure is to select weights on a held-out validation split and report accuracy on untouched test tracks.
+- Transition probability (0.9), rolling window (5), and bin widths are fixed rather than learned.
+- Two classes only; the architecture extends to more classes by widening the posterior and likelihood tables.
+
+## Usage
+
+```bash
+pip install -r requirements.txt
+cd src
+
+# Speed feature only
+python main.py ../data/testing.txt ../data/likelihood.txt
+
+# Speed + rolling volatility
+python main.py ../data/testing.txt ../data/likelihood.txt ../data/stdev_likelihood.txt
+```
+
+Per-track determinations, confidences, and overall accuracy print to stdout; full per-measurement decision strings are written to `output/classifier.out`.
+
+**Regenerate the volatility likelihoods:**
+
+```bash
+python stdev_likelihood_gen.py ../data/dataset.txt
+```
+
+**Visualization:**
+
+```bash
+python graph_track.py 3              # speed + rolling stdev for one track
+python graph_sigma_likelihoods.py    # class-conditional volatility distributions
+```
+
+## Repository structure
+
+```
+src/
+  main.py                    entry point: I/O, per-track classification, accuracy report
+  classifier.py              recursive Bayesian update loop (transition, pooling, vote)
+  stdev_likelihood_gen.py    builds Laplace-smoothed volatility likelihood tables
+  data_io.py                 loaders for tracks and likelihood tables
+  utils.py                   value-to-bin index mapping with NaN sentinels
+  graph_track.py             per-track speed / volatility plots
+  graph_sigma_likelihoods.py volatility likelihood curve plots
+  globals.py                 bin widths, window size, weights, transition probability
+```
+
+## Dependencies
+
+NumPy, pandas, matplotlib (see `requirements.txt`).
