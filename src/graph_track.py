@@ -1,12 +1,11 @@
 '''
-graph_sigma_likelihoods.py
+graph_track.py
 4/19/2025
 Harry Lynch
-Standalone test file to visualize the results from a given track of the testset.
-Takes in an index of the track the user would like to observe (0-19) and produces
-a graph and various stats relating to the likelihoods used in the classifier.
-This module helped me greatly in determining how to weigh the two likelihoods,
-ultimately allowing my classifier to reach 100% accuracy over the testset.
+Standalone test file to visualize a single test track. Takes in an index of
+the track the user would like to observe (0-9) and plots that track's speed
+series alongside its 5-sample rolling standard deviation, along with printing
+summary statistics for both.
 '''
 
 import numpy as np
@@ -15,7 +14,7 @@ import matplotlib.pyplot as plt
 import sys
 
 if len(sys.argv) < 2:
-    print("Must give index of track you would like to observe (0-19)")
+    print("Must give index of track you would like to observe (0-9)")
     print("Usage: python graph_track.py [0..9]")
     sys.exit()
 

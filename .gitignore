@@ -6,3 +6,5 @@ env
 *.pyd
 *.pdb
 *.pdf
+output/*
+!output/.gitkeep

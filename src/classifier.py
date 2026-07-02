@@ -14,7 +14,8 @@ from globals import *
 
 '''
 Initialize a transition matrix which represents the probabilty that the next
-classification is the same as the previous which is 0.9 per spec
+classification is the same as the previous (0.9, matching the tracked objects' class
+persistence)
 
 Matrix looks like the following:
 0.9. 0.1
@@ -48,7 +49,7 @@ def classify_track(track: np.ndarray,
     n_speed_bins = like_speed.shape[1]
     n_sig_bins   = like_sig.shape[1] if like_sig is not None else 0
 
-    # Initialize the prior at [p(bird) = 0.5, p(plane) = 0.5] per spec
+    # Initialize an uninformative uniform prior [p(bird) = 0.5, p(plane) = 0.5]
     post = np.array([0.5, 0.5], dtype=float)
     # per keeps track of the per-iteration classifications
     per  = []
@@ -83,7 +84,7 @@ def classify_track(track: np.ndarray,
                 sigma = float(np.std(buf))
                 idx_sig = utils.sigma_to_bin(sigma, sig_min, n_sig_bins)
                 if idx_sig >= 0:
-                    # Apply the weighted probabilities to the final likelihood vector same as line 50
+                    # Applies the weighted likelihood update to the likelihood vector
                     like_vec *= (like_sig[:, idx_sig] ** (1 - weight))
         
         # Update posterior probability in light of the new likelihoods generated
@@ -95,7 +96,7 @@ def classify_track(track: np.ndarray,
         # in likelihoods
         per.append(CLASSES[post.argmax()])
     
-    # Tally per classifications and make a final decision-- tie goes to most recent observation
+    # Tally per classifications and make a final decision-- tie broken by the final posterior
     b_cnt = per.count('b')
     a_cnt = per.count('a')
     if b_cnt > a_cnt:
@@ -108,5 +109,6 @@ def classify_track(track: np.ndarray,
 
     else:
         final = CLASSES[post.argmax()]
-    # Return the per-iteration results and the final determination 
+        prob = float(post.max())  # on a vote tie, confidence = final posterior
+    # Return the per-iteration results and the final determination
     return ''.join(per), final, prob 

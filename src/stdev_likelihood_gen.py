@@ -86,7 +86,7 @@ args = sys.argv
 
 if len(args) != 2:
     print("Please provide a path to dataset.txt")
-    print("Usage: python ../data/stdev_likelihood_gen.py")
+    print("Usage: python stdev_likelihood_gen.py ../data/dataset.txt")
     sys.exit(1)
 
 dataset_path = args[1]
